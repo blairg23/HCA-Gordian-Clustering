@@ -14,9 +14,38 @@ Description:
 '''
 # import numpy
 # import pandas
+import os
 
 class DatafileProcessor():
-	def __init__(self):
+	def __init__(self, filename=None):
+		if filename != None:
+			self.read_file(filename=filename)
+		else:
+			print "[ERROR] Requires a filename."
+
+	def read_file(self, filename=None):
+		name, ext = os.path.splitext(filename)
+		if ext == '.json':
+			print 'found json file'
+			self.read_json(filename=filename)
+		elif ext == '.csv':
+			print 'found csv file'
+			self.read_csv(filename=filename)
+		else:
+			print '[ERROR] Requires file encoded in the CSV or JSON file format.'
+
+	def read_json(self, filename=None):
+		'''
+		Reads in a file in the JSON format.
+		'''
+		print 'in read_json'
+		pass
+
+	def read_csv(self, filename=None):
+		'''
+		Reads in a file in the CSV format.
+		'''
+		print 'in read_csv'
 		pass
 
 	def create_trie(self, *words):
@@ -62,3 +91,8 @@ class DatafileProcessor():
 
 	def HCA_Gordian(self):
 		pass
+
+if __name__ == '__main__':
+	filename = os.path.join('data', 'data.json')
+	filename2 = os.path.join('data', 'techcrunch.csv')
+	dfp = DatafileProcessor(filename=filename)
