@@ -2,7 +2,7 @@
 '''
 Name: DatafileProcessor.py
 Author: Blair Gemmer
-Version: 20151123
+Version: 20151125
 
 Description: 
 
@@ -64,18 +64,11 @@ class DatafileProcessor():
 				print '[Translating to CSV format...]\n'
 			filename, ext = os.path.splitext(filename)
 			filename += '.csv'
-			# Find max number of keys and use that as our header:
-			# max_keys = 0
 			keys = set(dataframe[0].keys())
 			for row in dataframe:
 				for key in row.keys():
 					if key not in keys:
 						keys.add(key)
-				# if len(row.keys()) > max_keys:
-				# 	max_keys = len(row.keys())
-				# 	max_candidate = row.keys()
-				# 	print max_candidate
-			# print dataframe[0].keys()
 			with open(filename, 'w+') as csv_file:
 				writer = csv.DictWriter(csv_file, fieldnames=keys)
 				writer.writeheader()
