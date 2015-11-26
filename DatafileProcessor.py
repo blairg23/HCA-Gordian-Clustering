@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-Name: datafile_processor.py
+Name: DatafileProcessor.py
 Author: Blair Gemmer
 Version: 20151123
 
@@ -12,76 +12,104 @@ Description:
 
 3. Outputs the maximal uniqueness
 '''
-# import numpy
-# import pandas
+import numpy as np
+import pandas as pd
 import os
+import json
+import csv
 
 class DatafileProcessor():
-	def __init__(self, filename=None):
+	def __init__(self, filename=None, verbose=False):
 		if filename != None:
-			self.read_file(filename=filename)
+			self.read_file(filename=filename, verbose=verbose)
 		else:
 			print "[ERROR] Requires a filename."
 
-	def read_file(self, filename=None):
+	def read_file(self, filename=None, verbose=False):
+		if verbose:		
+			print '[Processing file: {filename}...]\n'.format(filename=filename)
 		name, ext = os.path.splitext(filename)
 		if ext == '.json':
-			print 'found json file'
-			self.read_json(filename=filename)
+			if verbose:
+				print '[Processing as JSON...]\n'
+			dataframe = self.read_json(filename=filename, verbose=verbose)
 		elif ext == '.csv':
-			print 'found csv file'
-			self.read_csv(filename=filename)
+			if verbose:
+				print '[Processing as CSV...]\n'
+			dataframe = self.read_csv(filename=filename, verbose=verbose)
 		else:
-			print '[ERROR] Requires file encoded in the CSV or JSON file format.'
+			print '[ERROR] Requires file encoded in the CSV or JSON file format.'		
+		return dataframe
 
-	def read_json(self, filename=None):
+	def read_json(self, filename=None, dataset_header='dataset', verbose=False):
 		'''
-		Reads in a file in the JSON format.
+		Reads in a file in the JSON format and returns a Pandas dataframe.
 		'''
-		print 'in read_json'
-		pass
+		if verbose:
+			print '[Reading JSON file...]\n'
+		def byteify(input):
+			if isinstance(input, dict):
+				return {byteify(key):byteify(value) for key,value in input.iteritems()}
+			elif isinstance(input, list):
+				return [byteify(element) for element in input]
+			elif isinstance(input, unicode):
+				return input.encode('utf-8')
+			else:
+				return input
+		def json_to_csv(filename=None, dataframe=None):
+			'''
+			Converts the json dataframe to csv format
+			'''
+			if verbose:
+				print '[Translating to CSV format...]\n'
+			filename, ext = os.path.splitext(filename)
+			filename += '.csv'
+			# Find max number of keys and use that as our header:
+			# max_keys = 0
+			keys = set(dataframe[0].keys())
+			for row in dataframe:
+				for key in row.keys():
+					if key not in keys:
+						keys.add(key)
+				# if len(row.keys()) > max_keys:
+				# 	max_keys = len(row.keys())
+				# 	max_candidate = row.keys()
+				# 	print max_candidate
+			# print dataframe[0].keys()
+			with open(filename, 'w+') as csv_file:
+				writer = csv.DictWriter(csv_file, fieldnames=keys)
+				writer.writeheader()
 
-	def read_csv(self, filename=None):
+				for row in dataframe:
+					row = byteify(row)
+					writer.writerow(row)
+			if verbose:
+				print '[Wrote file: {filename}...]\n'.format(filename=filename)
+			return filename
+
+		# Convert JSON to CSV:
+		dataframe = pd.read_json(filename)[dataset_header]
+		csv_file = json_to_csv(filename=filename, dataframe=dataframe)
+		
+		return self.read_csv(filename=csv_file, verbose=verbose)
+
+	def read_csv(self, filename=None, verbose=False):
 		'''
 		Reads in a file in the CSV format.
 		'''
-		print 'in read_csv'
-		pass
+		if verbose:
+			print '[Reading CSV file...]\n'
+		dataframe = pd.read_csv(filename)
+		#data_dict = dataframe.to_dict()
+		if verbose:
+			print '[Printing Dataframe Info...]\n'
+			print '[Keys: ]\n'
+			print dataframe.keys(), '\n'
+			print '[Data: ]\n'
+			print dataframe.head()			
+		return dataframe
 
-	def create_trie(self, *words):
-		'''
-		Creates a prefix tree (or trie) from the given list of words. 
-		Borrowed from http://stackoverflow.com/questions/11015320/how-to-create-a-trie-in-python
-		'''
-		_end = '_end_'
-
-		root = dict()
-		for word in words:
-			current_dict = root
-			for letter in word:
-				current_dict = current_dict.setdefault(letter, {})
-			current_dict[_end] = _end
-		return root
-
-	def in_trie(self, trie, word):
-		'''
-		Traverses a prefix tree (or trie) and returns the boolean value if the given
-		word is in the given trie.
-		Borrowed from http://stackoverflow.com/questions/11015320/how-to-create-a-trie-in-python
-		'''		
-		_end = '_end_'
-
-		current_dict = trie
-		for letter in word:
-			if letter in current_dict:
-				current_dict = current_dict[letter]
-			else:
-				return False
-		else:
-			if _end in current_dict:
-				return True
-			else:
-				return False
+	
 
 	def HCA(self):
 		pass
@@ -93,6 +121,8 @@ class DatafileProcessor():
 		pass
 
 if __name__ == '__main__':
-	filename = os.path.join('data', 'data.json')
-	filename2 = os.path.join('data', 'techcrunch.csv')
-	dfp = DatafileProcessor(filename=filename)
+	test_data = os.path.join('data', 'data.json')
+	test_techcrunch = os.path.join('data', 'techcrunch.csv')
+	test_json = os.path.join('data', 'test_data.json')
+	test_csv = os.path.join('data', 'test_data.csv')
+	dfp = DatafileProcessor(filename=test_data, verbose=True)
