@@ -113,34 +113,118 @@ class DatafileProcessor():
 			print dataframe.head(), '\n'			
 		return dataframe
 
-	def create_trie(self, dataframe=None, keys=None, verbose=False):	
+	def create_trie(self, dataframe=None, verbose=False):	
 		_end = '_end_'
 
 		if verbose:
 			print '[Creating a prefix tree...]\n'
 			print '[Keys: ]', '\n'
-			print ','.join(keys)
+			print ','.join(dataframe.keys())
 			# for key in keys:
 			# 	print key
 			print '\n'		
 
-		trie = load_dataframe(dataframe=dataframe)
+		trie = load_dataframe(dataframe=dataframe, verbose=verbose)
 		
 		return trie
 
 	def Gordian(self, dataframe=None, verbose=False):
+		'''
+		Performs the Gordian clustering technique to find minimum unique column combinations.
+		'''
 		if verbose:
 			print '[Performing Gordian analysis on dataframe...]\n'
-		trie = self.create_trie(dataframe=dataframe, keys=dataframe.keys(), verbose=verbose)
+		def find_uniques(trie=None, max_non_uniques=None, min_uniques=None, columns=[]):
+			'''
+			Traverse a given trie node for the minimum uniques.
+			'''
+			if verbose:
+				print '[Maximal Non-Uniques: ]'
+				print max_non_uniques, '\n'
+				print '[Minimal Uniques: ]'
+				print min_uniques, '\n'
+			for child in trie.children:
+				# If the child object has more than one child of its own,
+				# then this means the path has diverged and it's a non-unique,
+				# along with every superset:
+				if len(trie.children[child].children.keys()) > 1:
+					# So add the child to the list of columns discovered so far:
+					columns.append(trie.children[child].column)
+					# And add the column combination list to the 
+					# maximal non-unique list:
+					max_non_uniques.append(columns)
+					# and remove the column combination list from the 
+					# list of minimal uniques (if it exists:
+					if columns in min_uniques:
+						min_uniques.remove(columns)
+					# finally, reset the columns, since we've found the maximal non-unique list:
+					columns = []
+					# and add the new root to the list of column combinations:
+					columns.append(trie.children[child])
+					return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)
+				# Otherwise, if there aren't any children, we're done with this branch:
+				elif len(trie.children[child].children.keys()) == 0:
+					# So reset the columns
+					columns = []
+				# Otherwise, add to the column combination list and the
+				# columns to the minimal unique list:
+				else:
+					# Remove the old column combinations list (if it exists):
+					if columns in min_uniques:
+						min_uniques.remove(columns)
+					# Add a new column to the combinations list:
+					columns.append(trie.children[child].column)
+					# finally, add the updated columns list:
+					min_uniques.append(columns)
+					return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)
+				#print trie.children[child].column
+			return max_non_uniques, min_uniques
+
+		trie = self.create_trie(dataframe=dataframe, verbose=verbose)
+		# Just to ensure we created a path for each row:
 		for index, row in dataframe.iterrows():
-		# 	row = [str(words).strip().lower() for words in row]
-		# 	print row
-			print '[Results: ]'
-			print in_trie(trie=trie, words=row, verbose=False), '\n'
+			if verbose:
+				print '[Results: ]'
+				print in_trie(trie=trie, words=row, verbose=False), '\n'
+
+		# Maximum non-unique candidates:
+		max_non_uniques = []
+		# Minimum unique candidates:
+		min_uniques = []
+
+		# Recursively traverse trie to determine non-uniques:
+		max_non_uniques, min_uniques = find_uniques(trie=trie, max_non_uniques=max_non_uniques, min_uniques=min_uniques)
+		if verbose:
+			print '[Maximal Non-Uniques: ]'
+			print max_non_uniques, '\n'
+			print '[Minimal Uniques: ]'
+			print min_uniques, '\n'
+		# print '[ROOT]'
+		# print trie.word
+		# print trie.column
+		# print '[CHILDREN]'
+		# for child in trie.children:			
+		# 	print '[CHILD: ]', child#trie.children[child].word
+		# # 	print trie.children[child].column
+		#  	print '[GRANDCHILDREN]'
+		# 	for grandchild in trie.children[child].children:
+		# 		print '[GRANDCHILD: ]', grandchild
+		# 		print '[GREATGRANDCHILDREN]'
+		# 		for greatgrandchild in trie.children[child].children[grandchild].children:
+		# 			print '[GREATGRANDCHILD: ]', greatgrandchild
+		# 			print '[GREATGREATGRANDCHILDREN]'
+		# 		for greatgreatgrandchild in	trie.children[child].children[grandchild].children[greatgrandchild].children:
+		# 			print '[GREATGREATGRANDCHILD: ]', greatgreatgrandchild
+		# 		print trie.children[child].children[grandchild].word
+		# 		print trie.children[child].children[grandchild].column
+		# print '\n'
 		return trie
 
 
 	def HCA(self, dataframe=None, verbose=False):
+		'''
+		Performs the HCA clustering technique to find minimum unique column combinations.
+		'''
 		if verbose:
 			print '[Performing HCA analysis on dataframe...]\n'
 		pass
@@ -152,11 +236,11 @@ class DatafileProcessor():
 if __name__ == '__main__':
 	test_data = os.path.join('data', 'data.json')
 	test_techcrunch = os.path.join('data', 'techcrunch.csv')
-	test_json = os.path.join('data', 'test_data.json')
-	test_csv = os.path.join('data', 'test_data.csv')
+	test_json = os.path.join('data', 'json', 'test_data.json')
+	test_csv = os.path.join('data', 'csv', 'test_data.csv')
 
 	verbose = True
-	dfp = DatafileProcessor(filename=test_json, algorithm='Gordian', verbose=verbose)
+	dfp = DatafileProcessor(filename=test_csv, algorithm='Gordian', verbose=verbose)
 
 	if verbose:
 		print '[Results: ]'
