@@ -8,22 +8,30 @@ Description:
 
 1. Able to open datafiles, which have been encoded in json or csv format.
 
-2. Performs clustering techniques on the data, using the Gordian and HCA clustering methods.
+2. Performs clustering techniques on the data, using the specified (Gordian or HCA) clustering method.
 
-3. Outputs the maximal uniqueness
+3. Outputs the minimal unique column combinations.
 '''
 import numpy as np
 import pandas as pd
 import os
 import json
 import csv
+from Node import Node, load_dictionary, load_dataframe, in_trie
 
 class DatafileProcessor():
-	def __init__(self, filename=None, verbose=False):
+	def __init__(self, filename=None, algorithm='Gordian', verbose=False):
 		if filename != None:
-			self.read_file(filename=filename, verbose=verbose)
+			dataframe = self.read_file(filename=filename, verbose=verbose)
 		else:
 			print "[ERROR] Requires a filename."
+
+		if algorithm.lower() == 'gordian':
+			self.results = self.Gordian(dataframe=dataframe, verbose=verbose)
+		elif algorithm.lower() == 'hca':
+			self.results = self.HCA(dataframe=dataframe, verbose=verbose)
+		else:
+			print '[ERROR] Specify an algorithm (HCA or Gordian).'
 
 	def read_file(self, filename=None, verbose=False):
 		if verbose:		
@@ -48,6 +56,9 @@ class DatafileProcessor():
 		if verbose:
 			print '[Reading JSON file...]\n'
 		def byteify(input):
+			'''
+			Removes unicode encodings from the given input string.
+			'''
 			if isinstance(input, dict):
 				return {byteify(key):byteify(value) for key,value in input.iteritems()}
 			elif isinstance(input, list):
@@ -74,7 +85,7 @@ class DatafileProcessor():
 				writer.writeheader()
 
 				for row in dataframe:
-					row = byteify(row)
+					row = byteify(row) # Removes unicode characters
 					writer.writerow(row)
 			if verbose:
 				print '[Wrote file: {filename}...]\n'.format(filename=filename)
@@ -99,16 +110,41 @@ class DatafileProcessor():
 			print '[Keys: ]\n'
 			print dataframe.keys(), '\n'
 			print '[Data: ]\n'
-			print dataframe.head()			
+			print dataframe.head(), '\n'			
 		return dataframe
 
-	
+	def create_trie(self, dataframe=None, keys=None, verbose=False):	
+		_end = '_end_'
 
-	def HCA(self):
+		if verbose:
+			print '[Creating a prefix tree...]\n'
+			print '[Keys: ]', '\n'
+			print ','.join(keys)
+			# for key in keys:
+			# 	print key
+			print '\n'		
+
+		trie = load_dataframe(dataframe=dataframe)
+		
+		return trie
+
+	def Gordian(self, dataframe=None, verbose=False):
+		if verbose:
+			print '[Performing Gordian analysis on dataframe...]\n'
+		trie = self.create_trie(dataframe=dataframe, keys=dataframe.keys(), verbose=verbose)
+		for index, row in dataframe.iterrows():
+		# 	row = [str(words).strip().lower() for words in row]
+		# 	print row
+			print '[Results: ]'
+			print in_trie(trie=trie, words=row, verbose=False), '\n'
+		return trie
+
+
+	def HCA(self, dataframe=None, verbose=False):
+		if verbose:
+			print '[Performing HCA analysis on dataframe...]\n'
 		pass
 
-	def Gordian(self):
-		pass
 
 	def HCA_Gordian(self):
 		pass
@@ -118,4 +154,14 @@ if __name__ == '__main__':
 	test_techcrunch = os.path.join('data', 'techcrunch.csv')
 	test_json = os.path.join('data', 'test_data.json')
 	test_csv = os.path.join('data', 'test_data.csv')
-	dfp = DatafileProcessor(filename=test_data, verbose=True)
+
+	verbose = True
+	dfp = DatafileProcessor(filename=test_json, algorithm='Gordian', verbose=verbose)
+
+	if verbose:
+		print '[Results: ]'
+		print dfp.results
+		print dfp.results.children
+		# for child in dfp.results.children:
+		# 	print dfp.results.children[child].children
+	
