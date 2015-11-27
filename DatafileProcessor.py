@@ -134,50 +134,66 @@ class DatafileProcessor():
 		'''
 		if verbose:
 			print '[Performing Gordian analysis on dataframe...]\n'
-		def find_uniques(trie=None, max_non_uniques=None, min_uniques=None, columns=[]):
+		def find_uniques(trie=None, max_non_uniques=None, min_uniques=None, columns={}):
 			'''
 			Traverse a given trie node for the minimum uniques.
-			'''
-			if verbose:
-				print '[Maximal Non-Uniques: ]'
-				print max_non_uniques, '\n'
-				print '[Minimal Uniques: ]'
-				print min_uniques, '\n'
-			for child in trie.children:
+			'''			
+			for child in trie.children:				
 				# If the child object has more than one child of its own,
 				# then this means the path has diverged and it's a non-unique,
 				# along with every superset:
 				if len(trie.children[child].children.keys()) > 1:
-					# So add the child to the list of columns discovered so far:
-					columns.append(trie.children[child].column)
-					# And add the column combination list to the 
-					# maximal non-unique list:
-					max_non_uniques.append(columns)
-					# and remove the column combination list from the 
-					# list of minimal uniques (if it exists:
+					# If it's already in the minimal uniques, we need to remove it:
 					if columns in min_uniques:
 						min_uniques.remove(columns)
+					# Add the child to the list of columns discovered so far:
+					columns[trie.children[child].column] = child
+				 	# And add the column combination list to the 
+				 	# maximal non-unique list:
+				 	max_non_uniques.append(columns)
+				 	if verbose:
+						print '-------------------------'
+						print '[Maximal Non-Uniques: ]'
+						print max_non_uniques, '\n'
+						print '[Minimal Uniques: ]'
+						print min_uniques, '\n'
+						print '[Columns: ]'
+						print columns, '\n'
+						print '[Next Root: ]'
+						print trie.children[child].word, '\n'
 					# finally, reset the columns, since we've found the maximal non-unique list:
-					columns = []
+					columns = {}
 					# and add the new root to the list of column combinations:
-					columns.append(trie.children[child])
-					return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)
-				# Otherwise, if there aren't any children, we're done with this branch:
-				elif len(trie.children[child].children.keys()) == 0:
-					# So reset the columns
-					columns = []
-				# Otherwise, add to the column combination list and the
+					columns[trie.children[child].column] = child
+					return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)				
+				# Otherwise, add child to the column combination list and the
 				# columns to the minimal unique list:
 				else:
-					# Remove the old column combinations list (if it exists):
-					if columns in min_uniques:
+					columns[trie.children[child].column] = child
+					# If it's not a duplicate:
+					if columns not in min_uniques:
+						# add to our minial uniques:
+						min_uniques.append(columns)
+					else: # otherwise,
+						# Remove it from our minimal uniques:
 						min_uniques.remove(columns)
-					# Add a new column to the combinations list:
-					columns.append(trie.children[child].column)
-					# finally, add the updated columns list:
-					min_uniques.append(columns)
-					return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)
-				#print trie.children[child].column
+						# and add it to our maximal non-uniques:
+						max_non_uniques.append(columns)		
+					if verbose:
+						print '-------------------------'
+						print '[Maximal Non-Uniques: ]'
+						print max_non_uniques, '\n'
+						print '[Minimal Uniques: ]'
+						print min_uniques, '\n'
+						print '[Columns: ]'
+						print columns, '\n'
+						print '[Next Root: ]'
+						print trie.children[child].word, '\n'
+					return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)							
+				columns = {} # Once we're done, restart the process by resetting the column combinations
+				# and recursing:
+				return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)				
+			# When we're finally complete, return teh maximal non-uniques and minimal uniques:	
 			return max_non_uniques, min_uniques
 
 		trie = self.create_trie(dataframe=dataframe, verbose=verbose)
