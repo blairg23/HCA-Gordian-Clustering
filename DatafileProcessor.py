@@ -256,7 +256,7 @@ if __name__ == '__main__':
 	test_csv = os.path.join('data', 'csv', 'test_data.csv')
 
 	verbose = True
-	dfp = DatafileProcessor(filename=test_csv, algorithm='Gordian', verbose=verbose)
+	dfp = DatafileProcessor(filename=test_json, algorithm='Gordian', verbose=verbose)
 
 	if verbose:
 		print '[Results: ]'
