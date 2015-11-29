@@ -174,18 +174,17 @@ class DatafileProcessor():
 		def find_uniques(trie=None, k=None, non_uniques=None, uniques=None, verbose=False):
 			'''
 			Traverse a given trie node for the minimum uniques.
-			'''	
+			'''				
 			all_paths = find_paths(trie=trie)
 
 			if verbose:
 				print '[All Paths in Trie: ]'
 				for paths in all_paths:
 					print paths	
-			
+
 			# Find all combinations of the set of keys:
-			verbose=False
 			frequency_counter = {}
-			for path in all_paths: # For all the branches in the trie,
+			for path in all_paths: # For all the branches in the trie,			
 				if verbose:
 					print '[Path: ]'
 					print path, '\n'
@@ -221,14 +220,11 @@ class DatafileProcessor():
 			for key, value in frequency_counter.iteritems():
 				if key != '{}':
 					candidate_key = eval(key).keys()
-					verbose=True
 					if verbose:
 						print '[Candidate Key: ] {candidate_key}\n'.format(candidate_key=candidate_key)
 					if value > 1: # If we found a non-unique
 						if verbose:
 							print '[Non-Unique Found: ]', key
-						# print frequency_counter
-						# print eval(key)
 						if candidate_key not in non_uniques:  # If we didn't already add the candidate,							
 							non_uniques.append(candidate_key) # add it to non-uniques.
 							if verbose:
@@ -236,9 +232,9 @@ class DatafileProcessor():
 								print '[Non-Uniques: ] {non_uniques}\n'.format(non_uniques=non_uniques)
 							if candidate_key in uniques:      # But if it's in the uniques,
 								uniques.remove(candidate_key) # remove it from uniques.
-								print '[Removed from Uniques: ]', candidate_key
-								print '[Uniques: ] {uniques}\n'.format(uniques=uniques)
-								
+								if verbose:
+									print '[Removed from Uniques: ]', candidate_key
+									print '[Uniques: ] {uniques}\n'.format(uniques=uniques)								
 					else:		
 						if candidate_key not in uniques and candidate_key not in non_uniques: # If the candidate isn't already in uniques or non-uniques, 							
 							uniques.append(candidate_key)		# add it to uniques
@@ -246,103 +242,32 @@ class DatafileProcessor():
 								print '[Unique Found: ]', key
 								print '[Added to Uniques: ]', candidate_key
 								print '[Uniques: ] {uniques}\n'.format(uniques=uniques)							
-						# elif candidate_key in uniques:    		# however, if it is in uniques already,
-						# 	uniques.remove(candidate_key) 		# then it's not unique, so remove it
-						# 	if verbose:
-						# 		print '[Removed from Uniques: ]', candidate_key
-						# 		print '[Uniques: ] {uniques}\n'.format(uniques=uniques)							
-						# 	non_uniques.append(candidate_key)	# and add to non-uniques
-						# 	if verbose:
-						# 		print '[Added to Non-Uniques: ]', candidate_key
-						# 		print '[Non-Uniques: ] {non_uniques}\n'.format(non_uniques=non_uniques)							
-						else:
+						else: # contrarily, if it's already in non-uniques, no need to do anything.
 							if verbose:
 								print '[Already in Non-Uniques]'
-						# contrarily, if it's already in non-uniques, no need to do anything.
 
 						if k > 0: # If we haven't reached the end, decrement k and try again:
-							non_uniques, uniques = find_uniques(trie=trie, k=k-1, non_uniques=non_uniques, uniques=uniques)
+							non_uniques, uniques = find_uniques(trie=trie, k=k-1, non_uniques=non_uniques, uniques=uniques, verbose=verbose)
 						else:
 							return non_uniques, uniques
-
-
-			
-
-			# for child in trie.children:				
-			# 	# If the child object has more than one child of its own,
-			# 	# then this means the path has diverged and it's a non-unique,
-			# 	# along with every superset:
-			# 	if len(trie.children[child].children.keys()) > 1:
-			# 		# If it's already in the minimal uniques, we need to remove it:
-			# 		if columns in min_uniques:
-			# 			min_uniques.remove(columns)
-			# 		# Add the child to the list of columns discovered so far:
-			# 		columns[trie.children[child].column] = child
-			# 	 	# And add the column combination list to the 
-			# 	 	# maximal non-unique list:
-			# 	 	max_non_uniques.append(columns)
-			# 	 	if verbose:
-			# 			print '-------------------------'
-			# 			print '[Maximal Non-Uniques: ]'
-			# 			print max_non_uniques, '\n'
-			# 			print '[Minimal Uniques: ]'
-			# 			print min_uniques, '\n'
-			# 			print '[Columns: ]'
-			# 			print columns, '\n'
-			# 			print '[Next Root: ]'
-			# 			print trie.children[child].word, '\n'
-			# 		# finally, reset the columns, since we've found the maximal non-unique list:
-			# 		columns = {}
-			# 		# and add the new root to the list of column combinations:
-			# 		columns[trie.children[child].column] = child
-			# 		return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)				
-			# 	# Otherwise, add child to the column combination list and the
-			# 	# columns to the minimal unique list:
-			# 	else:
-			# 		columns[trie.children[child].column] = child
-			# 		# If it's not a duplicate:
-			# 		if columns not in min_uniques:
-			# 			# add to our minial uniques:
-			# 			min_uniques.append(columns)
-			# 		else: # otherwise,
-			# 			# Remove it from our minimal uniques:
-			# 			min_uniques.remove(columns)
-			# 			# and add it to our maximal non-uniques:
-			# 			max_non_uniques.append(columns)		
-			# 		if verbose:
-			# 			print '-------------------------'
-			# 			print '[Maximal Non-Uniques: ]'
-			# 			print max_non_uniques, '\n'
-			# 			print '[Minimal Uniques: ]'
-			# 			print min_uniques, '\n'
-			# 			print '[Columns: ]'
-			# 			print columns, '\n'
-			# 			print '[Next Root: ]'
-			# 			print trie.children[child].word, '\n'
-			# 		return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)							
-			# 	columns = {} # Once we're done, restart the process by resetting the column combinations
-			# 	# and recursing:
-			# 	return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)				
-			# # When we're finally complete, return teh maximal non-uniques and minimal uniques:	
 			return non_uniques, uniques
 
 		trie = self.create_trie(dataframe=dataframe, verbose=verbose)
 		trie_height = find_trie_height(trie=trie)
-		print '[Trie Height: ]', trie_height
+		if verbose:
+			print '[Trie Height: ]', trie_height
 		# Just to ensure we created a path for each row:
 		for index, row in dataframe.iterrows():
 			if verbose:
 				print '[Results: ]'
-				print in_trie(trie=trie, words=row, verbose=False), '\n'
+				print in_trie(trie=trie, words=row, verbose=False), '\n'		
 
-		
 		non_uniques = []
 		uniques = []
 
 		# Recursively traverse trie to determine non-uniques:
-		non_uniques, uniques = find_uniques(trie=trie, k=trie_height, non_uniques=non_uniques, uniques=uniques)
+		non_uniques, uniques = find_uniques(trie=trie, k=trie_height, non_uniques=non_uniques, uniques=uniques, verbose=False)
 
-		verbose = True
 		if verbose:
 			print '[Non-Uniques: ]'
 			print non_uniques, '\n'
@@ -357,43 +282,139 @@ class DatafileProcessor():
 		mymax = max(map(len,non_uniques))
 		max_non_unique = [candidate for candidate in non_uniques if len(candidate)==mymax] # Maximum unique candidates
 		
-
 		if verbose:
 			print '[Maximal Non-Unique: ]'
 			print max_non_unique, '\n'
 			print '[Minimal Uniques: ]'
 			print min_uniques, '\n'
 
-
-		# print '[ROOT]'
-		# print trie.word
-		# print trie.column
-		# print '[CHILDREN]'
-		# for child in trie.children:			
-		# 	print '[CHILD: ]', child#trie.children[child].word
-		# # 	print trie.children[child].column
-		#  	print '[GRANDCHILDREN]'
-		# 	for grandchild in trie.children[child].children:
-		# 		print '[GRANDCHILD: ]', grandchild
-		# 		print '[GREATGRANDCHILDREN]'
-		# 		for greatgrandchild in trie.children[child].children[grandchild].children:
-		# 			print '[GREATGRANDCHILD: ]', greatgrandchild
-		# 			print '[GREATGREATGRANDCHILDREN]'
-		# 		for greatgreatgrandchild in	trie.children[child].children[grandchild].children[greatgrandchild].children:
-		# 			print '[GREATGREATGRANDCHILD: ]', greatgreatgrandchild
-		# 		print trie.children[child].children[grandchild].word
-		# 		print trie.children[child].children[grandchild].column
-		# print '\n'
-		return trie
+		return max_non_unique, min_uniques
 
 
 	def HCA(self, dataframe=None, verbose=False):
 		'''
 		Performs the HCA clustering technique to find minimum unique column combinations.
+		Following Algorithm 2: "HCA Algorithm" from "Advancing the Discovery of Unique Column Combinations" precisely.
 		'''
+		def candidate_generation(non_uniques=None):
+			'''
+			Performs efficient candidate generation for HCA analysis, given a list of non-uniques.
+			Following Algorithm 1: "CandidateGen" from "Advancing the Discovery of Unique Column Combinations" precisely.
+			'''
+			def is_not_minimal(candidate=None):
+				'''
+				Not sure what the algorithm is expecting here.
+				'''
+				return True
+
+			candidates = []
+			non_unique_1 = []
+			non_unique_2 = []
+			k = len(non_uniques)
+			for i in range(k):
+				for j in range(i+1, k):
+					non_unique_1.append(non_uniques[i])
+					non_unique_2.append(non_uniques[j])
+					if non_unique_1[0:k-2] == non_unique_2[0:k-2]:
+						candidate = non_unique_1[0:k-2]
+					if non_unique_1[k-1] < non_unique_2[k-1]:
+						candidate[k-1] = non_unique_1[k-1]
+						candidate[k] = non_unique_2[k-1]
+					else:
+						candidate[k-1] = non_unique_2[k-1]
+						candidate[k] = non_unique_1[k-1]
+					if is_not_minimal(candidate=candidate):
+						continue
+					candidates.append(candidate)
+			return candidates
+
+		def is_unique(dataframe=None, current_column=None):
+			'''
+			Returns False if the given column is in the list of columns in the given dataframe; True if not.			
+			'''
+			# First, remove the current column from the list of columns to prevent false positive:
+			columns = [key for key in dataframe.keys()]			
+			# print 'columns:', columns
+			# print 'current_column:', current_column
+			columns.remove(current_column)
+			# print 'columns:', columns
+			# Then iterate through the columns to determine uniqueness:
+			for column in columns:
+				if (dataframe[current_column] == dataframe[column]).all(): # If we found a match,
+					return False # The column isn't unique.
+			return True # Otherwise, it is.
+
+		def get_histogram(dataframe=None, current_column=None):
+			'''
+			Creates a histogram of all the values in the given column of data.
+			'''	
+			histogram = {}		
+			for row in dataframe[current_column]:
+				if row in histogram.keys():
+					histogram[row] += 1
+				else:
+					histogram[row] = 1
+			return histogram
+
+		def is_futile(candidate=None):
+			'''
+			Not sure what the algorithm is expecting here.
+			'''
+			return True
+
+		def pruned_by_histogram(candidate=None):
+			'''
+			Again, the paper does not implicitly state what this is supposed to do.
+			'''
+			return True
+
+		def retrieve_fds():
+			'''
+			Not sure what they want here.
+			'''
+			pass
+
 		if verbose:
 			print '[Performing HCA analysis on dataframe...]\n'
-		pass
+		columns = dataframe.keys() # Get m columns
+		non_unique_columns = []
+		uniques = []
+		column_histograms = {}
+		for current_column in columns:
+			if is_unique(dataframe=dataframe, current_column=current_column):
+				uniques.append(dataframe[current_column])
+			else:
+				non_unique_columns.append(dataframe[current_column])
+				column_histograms[current_column] = get_histogram(dataframe=dataframe, current_column=current_column)
+			current_non_uniques = non_unique_columns			
+			for k in range(2, len(non_unique_columns)):
+				k_candidates = candidate_generation(non_uniques=current_non_uniques)
+				current_non_uniques = []
+				for candidate in k_candidates:
+					if is_futile(candidate=candidate):
+						pass
+					if pruned_by_histogram(candidate=candidate):
+						current_non_uniques.append(candidate)
+						pass
+					if is_unique(dataframe=dataframe, current_column=candidate):
+						uniques.append(candidate)
+						for k_candidate in k_candidates:
+							uniques.append(k_candidate)
+					else:
+						current_non_uniques.append(candidate)
+						for k_candidate in k_candidates:
+							current_non_uniques.append(k_candidate)
+						column_histograms[candidate] = get_histogram(dataframe=dataframe, current_column=candidate)
+				if k == 2:
+					retrieve_fds()
+		if verbose:
+			print '[Uniques: ]'
+			print uniques
+			print '[Non_uniques: ]'
+			print non_unique_columns
+
+		return uniques
+
 
 
 	def HCA_Gordian(self):
@@ -406,12 +427,23 @@ if __name__ == '__main__':
 	test_csv = os.path.join('data', 'csv', 'test_data.csv')
 
 	verbose = False
-	dfp = DatafileProcessor(filename=test_csv, algorithm='Gordian', verbose=verbose)
+	algorithm = 'gordian' # or Gordian
+	dfp = DatafileProcessor(filename=test_data, algorithm=algorithm, verbose=verbose)
 
-	if verbose:
-		print '[Results: ]'
-		print dfp.results
-		print dfp.results.children
-		# for child in dfp.results.children:
-		# 	print dfp.results.children[child].children
-	
+	if algorithm.lower() == 'gordian':
+		max_non_unique, min_uniques = dfp.results
+
+		verbose = True
+		if verbose:
+			print '[Maximal Non-Unique: ]'
+			print max_non_unique, '\n'
+			print '[Minimal Uniques: ]'
+			print min_uniques, '\n'
+
+	elif algorithm.lower() == 'hca':
+		verbose=True
+		if verbose:
+			print '[Unique Columns: ]'
+			print dir(dfp.results)
+			for result in dfp.results:
+				print result.name
