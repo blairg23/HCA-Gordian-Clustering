@@ -144,32 +144,34 @@ class DatafileProcessor():
 					max_size = size
 			return max_size + 1 # To account for start at 0
 
-		def find_combinations(trie=None, k=None):
+		def find_combinations(branch=None, k=None):
 			'''
-			Find all combinations of a particular trie or branch, given a k length.
+			Find all combinations of a particular branch, given a length k.
 			'''
-			# if k = len(trie):
-			# 	pass
-			pass
+			if k==0: yield []
+			elif k==len(branch): yield branch
+			else:
+				for i in xrange(len(branch)):
+					for cc in find_combinations(branch[i+1:], k-1):
+						yield [branch[i]] + cc
 		
-		def find_paths(trie, paths=[], path={}):
+		def find_paths(trie, path={}):
 			'''
 			Finds all paths of a given trie.
 			'''
-			if path in paths:
-				paths.remove(path)
-			path[trie.column] = trie.word
-			paths.append(path)
+			# If we're not at the root:
+			if trie.column != None:
+				path[trie.column] = trie.word # Add the new node to our list of nodes in this branch
 
 			if trie.final == True:
-				yield paths
+				yield path
 			else:
 				for child in trie.children:
-					for p in find_paths(trie=trie.children[child], path=path, paths=paths):
+					for p in find_paths(trie=trie.children[child], path=path):
 						yield p
 
 
-		def find_uniques(trie=None, k=None, max_non_uniques=None, min_uniques=None, verbose=False):
+		def find_uniques(trie=None, k=None, non_uniques=None, uniques=None, verbose=False):
 			'''
 			Traverse a given trie node for the minimum uniques.
 			'''	
@@ -179,7 +181,92 @@ class DatafileProcessor():
 				print '[All Paths in Trie: ]'
 				for paths in all_paths:
 					print paths	
-				
+			
+			# Find all combinations of the set of keys:
+			verbose=False
+			frequency_counter = {}
+			for path in all_paths: # For all the branches in the trie,
+				if verbose:
+					print '[Path: ]'
+					print path, '\n'
+					print '[K: {k}]\n'.format(k=k)
+					print '[Combinations: ]'
+				print '[K: {k}]\n'.format(k=k)
+				combinations = find_combinations(branch=path.keys(), k=k) # Get all combinations of size k
+				for key_combination in combinations:										
+					if verbose:						
+						print key_combination, '\n'						
+						print '[All values exist in the path: ]', all([path[key] in path.values() for key in key_combination]) 					
+					if all([path[key] in path.values() for key in key_combination]):	# If all values from the key exist in the combination
+						combination_dict = {}
+						for key in key_combination:							
+							combination_dict[key] = path[key]
+						if verbose:
+							print '\n[Combination Dictionary: ]'
+							print combination_dict, '\n'
+
+						if str(combination_dict) in frequency_counter:		# and if we've already added this combination to the frequency counter,
+							frequency_counter[str(combination_dict)] += 1 	# then increment it.
+						else: 												# Otherwise, 
+							frequency_counter[str(combination_dict)] = 1 	# instantiate it with a value of 1
+					
+					for key in key_combination:
+						if verbose:
+							print '[Column Key Combination: ]', path[key]							
+					if verbose:
+						print '\n[Frequency Counter: ]'
+						print frequency_counter, '\n'
+
+			# Check if any non-uniques emerged:
+			for key, value in frequency_counter.iteritems():
+				if key != '{}':
+					candidate_key = eval(key).keys()
+					verbose=True
+					if verbose:
+						print '[Candidate Key: ] {candidate_key}\n'.format(candidate_key=candidate_key)
+					if value > 1: # If we found a non-unique
+						if verbose:
+							print '[Non-Unique Found: ]', key
+						# print frequency_counter
+						# print eval(key)
+						if candidate_key not in non_uniques:  # If we didn't already add the candidate,							
+							non_uniques.append(candidate_key) # add it to non-uniques.
+							if verbose:
+								print '[Added to Non-Uniques: ]', candidate_key
+								print '[Non-Uniques: ] {non_uniques}\n'.format(non_uniques=non_uniques)
+							if candidate_key in uniques:      # But if it's in the uniques,
+								uniques.remove(candidate_key) # remove it from uniques.
+								print '[Removed from Uniques: ]', candidate_key
+								print '[Uniques: ] {uniques}\n'.format(uniques=uniques)
+								
+					else:		
+						if candidate_key not in uniques and candidate_key not in non_uniques: # If the candidate isn't already in uniques or non-uniques, 							
+							uniques.append(candidate_key)		# add it to uniques
+							if verbose:
+								print '[Unique Found: ]', key
+								print '[Added to Uniques: ]', candidate_key
+								print '[Uniques: ] {uniques}\n'.format(uniques=uniques)							
+						# elif candidate_key in uniques:    		# however, if it is in uniques already,
+						# 	uniques.remove(candidate_key) 		# then it's not unique, so remove it
+						# 	if verbose:
+						# 		print '[Removed from Uniques: ]', candidate_key
+						# 		print '[Uniques: ] {uniques}\n'.format(uniques=uniques)							
+						# 	non_uniques.append(candidate_key)	# and add to non-uniques
+						# 	if verbose:
+						# 		print '[Added to Non-Uniques: ]', candidate_key
+						# 		print '[Non-Uniques: ] {non_uniques}\n'.format(non_uniques=non_uniques)							
+						else:
+							if verbose:
+								print '[Already in Non-Uniques]'
+						# contrarily, if it's already in non-uniques, no need to do anything.
+
+						if k > 0: # If we haven't reached the end, decrement k and try again:
+							non_uniques, uniques = find_uniques(trie=trie, k=k-1, non_uniques=non_uniques, uniques=uniques)
+						else:
+							return non_uniques, uniques
+
+
+			
 
 			# for child in trie.children:				
 			# 	# If the child object has more than one child of its own,
@@ -237,7 +324,7 @@ class DatafileProcessor():
 			# 	# and recursing:
 			# 	return find_uniques(trie=trie.children[child], max_non_uniques=max_non_uniques, min_uniques=min_uniques, columns=columns)				
 			# # When we're finally complete, return teh maximal non-uniques and minimal uniques:	
-			return max_non_uniques, min_uniques
+			return non_uniques, uniques
 
 		trie = self.create_trie(dataframe=dataframe, verbose=verbose)
 		trie_height = find_trie_height(trie=trie)
@@ -248,16 +335,32 @@ class DatafileProcessor():
 				print '[Results: ]'
 				print in_trie(trie=trie, words=row, verbose=False), '\n'
 
-		# Maximum non-unique candidates:
-		max_non_uniques = []
-		# Minimum unique candidates:
-		min_uniques = []
+		
+		non_uniques = []
+		uniques = []
 
 		# Recursively traverse trie to determine non-uniques:
-		max_non_uniques, min_uniques = find_uniques(trie=trie, k=trie_height, max_non_uniques=max_non_uniques, min_uniques=min_uniques)
+		non_uniques, uniques = find_uniques(trie=trie, k=trie_height, non_uniques=non_uniques, uniques=uniques)
+
+		verbose = True
 		if verbose:
-			print '[Maximal Non-Uniques: ]'
-			print max_non_uniques, '\n'
+			print '[Non-Uniques: ]'
+			print non_uniques, '\n'
+			print '[Uniques: ]'
+			print uniques, '\n'
+		
+		# Get the minimal unique column combinations:		
+		mymin = min(map(len,uniques))
+		min_uniques = [candidate for candidate in uniques if len(candidate)==mymin] # Minimum unique candidates
+
+		# Get the maximal non-unique column combination:
+		mymax = max(map(len,non_uniques))
+		max_non_unique = [candidate for candidate in non_uniques if len(candidate)==mymax] # Maximum unique candidates
+		
+
+		if verbose:
+			print '[Maximal Non-Unique: ]'
+			print max_non_unique, '\n'
 			print '[Minimal Uniques: ]'
 			print min_uniques, '\n'
 
@@ -303,7 +406,7 @@ if __name__ == '__main__':
 	test_csv = os.path.join('data', 'csv', 'test_data.csv')
 
 	verbose = False
-	dfp = DatafileProcessor(filename=test_json, algorithm='Gordian', verbose=verbose)
+	dfp = DatafileProcessor(filename=test_csv, algorithm='Gordian', verbose=verbose)
 
 	if verbose:
 		print '[Results: ]'
