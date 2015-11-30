@@ -428,7 +428,7 @@ if __name__ == '__main__':
 
 	verbose = False
 	algorithm = 'gordian' # or Gordian
-	dfp = DatafileProcessor(filename=test_data, algorithm=algorithm, verbose=verbose)
+	dfp = DatafileProcessor(filename=test_json, algorithm=algorithm, verbose=verbose)
 
 	if algorithm.lower() == 'gordian':
 		max_non_unique, min_uniques = dfp.results
