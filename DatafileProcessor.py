@@ -190,7 +190,7 @@ class DatafileProcessor():
 					print path, '\n'
 					print '[K: {k}]\n'.format(k=k)
 					print '[Combinations: ]'
-				print '[K: {k}]\n'.format(k=k)
+				#print '[K: {k}]\n'.format(k=k)
 				combinations = find_combinations(branch=path.keys(), k=k) # Get all combinations of size k
 				for key_combination in combinations:										
 					if verbose:						
