@@ -444,6 +444,5 @@ if __name__ == '__main__':
 		verbose=True
 		if verbose:
 			print '[Unique Columns: ]'
-			print dir(dfp.results)
 			for result in dfp.results:
 				print result.name
