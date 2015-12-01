@@ -415,8 +415,6 @@ class DatafileProcessor():
 
 		return uniques
 
-
-
 	def HCA_Gordian(self):
 		pass
 
